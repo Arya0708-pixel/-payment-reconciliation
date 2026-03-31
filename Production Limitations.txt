@@ -1,0 +1,3 @@
+The system assumes a single currency and does not handle FX conversions.
+It uses simple amount-based matching and may incorrectly match transactions with identical values.
+It does not account for bank fees or partial settlements, which can affect real-world reconciliation.
