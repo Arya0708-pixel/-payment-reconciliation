@@ -1,0 +1,44 @@
+"""
+Test Cases for Payment Reconciliation System
+
+This file verifies that the reconciliation logic correctly:
+1. Matches transactions by ID
+2. Detects duplicate bank records
+3. Identifies orphan refunds
+4. Calculates batch total differences
+"""
+
+from data_generator import generate_data
+from reconciliation import hybrid_reconcile
+
+
+def run_tests():
+    print("Running reconciliation tests...\n")
+
+    # Generate sample data
+    platform, bank = generate_data()
+
+    # Run reconciliation
+    report = hybrid_reconcile(platform, bank)
+
+    # ---- Test Case 1: ID Matching ----
+    assert report["id_matched"] == 1
+    print("✓ Test 1 Passed: ID matching works")
+
+    # ---- Test Case 2: Duplicate Bank Entries ----
+    assert report["bank_duplicates"] == 1
+    print("✓ Test 2 Passed: Duplicate bank records detected")
+
+    # ---- Test Case 3: Orphan Refund Detection ----
+    assert report["orphan_refunds"] == 1
+    print("✓ Test 3 Passed: Orphan refunds identified")
+
+    # ---- Test Case 4: Batch Total Difference ----
+    assert report["batch_total_difference"] != 0
+    print("✓ Test 4 Passed: Batch difference calculated")
+
+    print("\nAll reconciliation tests passed successfully.")
+
+
+if __name__ == "__main__":
+    run_tests()

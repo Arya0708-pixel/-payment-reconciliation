@@ -1,0 +1,16 @@
+Build a Python application that performs hybrid financial reconciliation between a payments platform and a bank.
+
+Requirements:
+- Generate synthetic data for one month with:
+  - late settlement crossing month boundary
+  - rounding difference visible only in totals
+  - duplicate bank entry
+  - refund without matching original transaction
+- Implement multi-stage reconciliation:
+  1) exact ID matching
+  2) amount + date-window fallback matching (±2 days)
+  3) batch total comparison by day
+- Output a detailed reconciliation report.
+- Provide unit tests for each edge case.
+- Provide a Streamlit UI to visualize datasets and results.
+- Use pandas for data manipulation.

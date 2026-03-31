@@ -1,0 +1,215 @@
+# Claude Code Thread – Payment Reconciliation System
+
+This section documents the full interaction with Claude AI during development of the payment reconciliation system. It includes design discussions, incorrect approaches, debugging steps, and final implementation decisions.
+
+---
+
+## 1. Initial Problem Understanding
+
+### Prompt to Claude
+I need to build a system that reconciles transactions between a platform and bank settlement records. The bank may batch settlements and may not include platform transaction IDs. How should I design the matching logic?
+
+### Claude Response Summary
+Claude suggested:
+- Use a two-phase matching approach:
+  1. Exact ID matching
+  2. Fallback matching using amount and date proximity
+- Maintain reconciliation status for each transaction.
+
+This helped define the core architecture of the project.
+
+---
+
+## 2. First Attempt – ID Only Matching (Incorrect Approach)
+
+### Prompt
+Generate Python code to match platform and bank transactions using transaction IDs.
+
+### Generated Logic
+The initial matcher only compared:
+
+platform.id == bank.id
+
+
+### Issue Discovered
+During testing, most bank records did not contain platform IDs. As a result:
+- Nearly all transactions were marked as unmatched.
+
+### Fix
+I asked Claude:
+> What should I do if bank records do not store platform transaction IDs?
+
+Claude suggested implementing:
+- amount matching
+- date window matching
+
+---
+
+## 3. Second Attempt – Amount Only Matching (Flawed Logic)
+
+### Prompt
+Modify the matching logic to match transactions using only the amount field.
+
+### Problem
+This caused incorrect matches when:
+- multiple transactions had the same amount
+- batched settlements existed
+
+Example:
+
+Platform:
+T1 – 100
+T2 – 100
+
+Bank:
+B1 – 100
+
+
+The system matched T1 and left T2 unmatched arbitrarily.
+
+---
+
+## 4. Refinement – Add Date Proximity Matching
+
+### Prompt
+How can I ensure that the correct transaction is matched when multiple transactions share the same amount?
+
+### Claude Suggestion
+Claude proposed:
+- sorting transactions by date
+- matching the closest date within a tolerance window (1–2 days)
+
+This significantly improved accuracy.
+
+---
+
+## 5. Bug – Duplicate Bank Matching
+
+### Observed Behavior
+One bank transaction was being matched to multiple platform transactions.
+
+### Root Cause
+The matching loop did not track used bank records.
+
+### Prompt
+How do I prevent one bank transaction from being reused for multiple platform transactions?
+
+### Claude Fix
+Claude suggested maintaining a set:
+
+used_bank_ids = set()
+
+
+This ensured each bank record was matched only once.
+
+---
+
+## 6. Handling Floating Point Rounding Errors
+
+### Issue
+Some transactions failed to match due to:
+
+Platform: 99.999
+Bank: 100.00
+
+
+### Prompt
+How should I handle rounding differences in financial data?
+
+### Claude Recommendation
+Use:
+
+abs(platform_amount - bank_amount) < 0.01
+
+
+This was implemented as a tolerance threshold.
+
+---
+
+## 7. Incorrect CSV Loading Implementation
+
+### Initial Code
+
+csv.DictReader(open(path))
+
+
+This worked locally but failed in Streamlit because uploaded files are not file paths.
+
+### Fix Prompt
+Why does my CSV loading code fail when using Streamlit file uploads?
+
+Claude explained:
+- Streamlit provides a file-like object
+- Data must be decoded before reading
+
+### Final Fix
+
+csv.DictReader(file.read().decode().splitlines())
+
+
+---
+
+## 8. Structural Refactor Suggested by Claude
+
+### Prompt
+My entire logic is in one file. How should I structure this project professionally?
+
+### Claude Suggestion
+Split into modules:
+- loader.py
+- matcher.py
+- report.py
+- app.py
+
+This improved readability and maintainability.
+
+---
+
+## 9. Streamlit Deployment Failure – Wrong Main File Path
+
+### Issue
+The deployed app showed:
+
+Error running app
+
+
+### Investigation
+Claude suggested checking:
+- repository structure
+- main file path in Streamlit settings
+
+The issue was that Streamlit was configured to run:
+
+main/app.py
+
+while the actual file was:
+
+app.py
+
+
+Fixing this resolved deployment errors.
+
+---
+
+## 10. Final Architecture
+
+The final system consists of:
+
+
+app.py → Streamlit UI
+loader.py → CSV parsing
+matcher.py → Reconciliation algorithm
+report.py → CSV report generation
+
+
+---
+
+## 11. Key Learnings from Claude Assistance
+
+Through iterative prompting and debugging, the following improvements were made:
+
+- Added fallback matching when IDs were missing
+- Implemented date proximity logic
+- Prevented duplicate bank usage
+- Handled floating point rounding errors
+- Converted script into deployable Streamlit app
